@@ -1,0 +1,124 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: traefikauth
+  namespace: traefik
+  labels:
+    app: containous
+    name: traefikauth
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: containous
+      task: traefikauth
+  template:
+    metadata:
+      labels:
+        app: containous
+        task: traefikauth
+    spec:
+      containers:
+        - name: traefikauth
+          image: thomseddon/traefik-forward-auth:2
+          ports:
+            - containerPort: 4181
+              protocol: TCP
+          env:
+            - name: DEFAULT_PROVIDER
+              value: "oidc"
+            - name: PROVIDERS_OIDC_ISSUER_URL
+              valueFrom:
+                secretKeyRef:
+                  name: authenticationserver
+                  key: issuerurl
+            - name: PROVIDERS_OIDC_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: authenticationserver
+                  key: clientid
+            - name: PROVIDERS_OIDC_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: authenticationserver
+                  key: clientsecret
+            - name: SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: authenticationserver
+                  key: jwtsecret
+            - name: COOKIE_DOMAIN
+              value: my-domain.com                 
+            - name: AUTH_HOST
+              value: traefikauth.my-domain.com
+            - name: LOG_LEVEL
+              value: debug              
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: traefikauth
+  namespace: traefik
+
+spec:
+  ports:
+    - name: http
+      protocol: TCP
+      port: 4181
+      targetPort: 4181
+  selector:
+    app: containous
+    task: traefikauth
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: traefikauth-cert
+  namespace: traefik
+spec:
+  # Use this tls secret in the ingress
+  secretName: traefikauth-tls
+  issuerRef:
+    name: letsencrypt-traefik
+    kind: ClusterIssuer
+  dnsNames:
+    - "traefikauth.my-domain.com"  
+---     
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: traefikauth-route
+  namespace: traefik
+  annotations:
+    kubernetes.io/ingress.class: traefik
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`traefikauth.my-domain.com`)
+      kind: Rule
+      services:
+        - name: traefikauth
+          port: 4181
+      middlewares:
+        - name: auth
+  tls:
+    secretName: traefikauth-tls        
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: auth
+  namespace: traefik
+spec:
+  forwardAuth:
+    address: http://traefikauth:4181
+    authResponseHeaders: 
+      - X-Forwarded-User
+    trustForwardHeader: true
+
+

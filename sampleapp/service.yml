@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: traefik-app1-service
+  namespace: mynamespace
+spec:
+  selector:
+    app: traefik-app1
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
