@@ -30,7 +30,7 @@ helm repo update
 ```
 helm install traefik traefik/traefik -f "./traefik-values.yml" -n traefik --create-namespace
 ```
-![traefik-values.yml](./traefik-values.yml)
+[traefik-values.yml](./traefik-values.yml)
 
 # Setup Auth Proxy
 Deploy an authentication proxy using thomseddon/traefik-forward-auth:latest. This service will act as an intermediary, handling authentication requests for your applications.
@@ -43,12 +43,12 @@ Deploy an authentication proxy using thomseddon/traefik-forward-auth:latest. Thi
 To secure your sample application with the authentication layer, perform the following:
 
 1. Middleware Creation: Create middleware to forward all traffic to the auth proxy, ensuring every request is authenticated.
-   - ![Middleware](./middleware-auth.yml)
+   - [Middleware](./middleware-auth.yml)
    
 3. Kubernetes Resources: Define and deploy the necessary Kubernetes resources for your application, including:
-  - Deployment![Deployment](./sampleapp/deployment.yaml): To manage your application's replicas.
-  - Service![Service](./sampleapp/service.yaml): To expose your application within the Kubernetes cluster.
-  - Ingress Route![Ingress Route](./sampleapp/ingress.yaml): To define how external traffic is routed to your service, integrating with Traefik for ingress control.
+  - [Deployment](./sampleapp/deployment.yaml): To manage your application's replicas.
+  - [Service](./sampleapp/service.yaml): To expose your application within the Kubernetes cluster.
+  - [Ingress Route](./sampleapp/ingress.yaml): To define how external traffic is routed to your service, integrating with Traefik for ingress control.
     
 Following these steps will secure your application with OAuth/SSO authentication, leveraging Traefik for efficient traffic management and security.
 
